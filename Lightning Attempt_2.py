@@ -22,12 +22,11 @@ def get_data(wdir):
     chunksizes (in this case, 2,000,000 lines per chunk) and then stores 
     the chunked dataframes in a python dictionary for use later
     this method was used because it prevents a lot of overload on memory because of the large file sizes"""
-    diction={file: pd.read_csv(os.path.join(wdir, file), delim_whitespace=True, header=None, names=column_names, chunksize=5e5) for file in os.listdir(wdir)}    #places the chunked dataframe with the specific key in the dictionary; this is how we
-        #access the data later
+    diction={file: pd.read_csv(os.path.join(wdir, file), delim_whitespace=True, header=None, names=column_names, chunksize=5e5) for file in os.listdir(wdir)}
     return diction
 
 def set_year_month_day_hour(chunk):
-    #I used this function to process the file as it was being read in (by chunksize)
+    
     dates = pd.to_datetime(chunk.loc[:,'Date'])
     years = dates.dt.year
     months = dates.dt.month
@@ -35,7 +34,6 @@ def set_year_month_day_hour(chunk):
     times = pd.to_datetime(chunk.loc[:,'Time'], format='%H:%M:%S.%f')
     hours = times.dt.hour
     new_frame = pd.DataFrame({'Year': years, 'Month': months, 'Day': days, 'Time': times, 'Hour': hours})
-    #creates new column for "hour"    #specifies the columns that we want to keep
     return new_frame
 
 def calc_frequencies(data, type_freq):
@@ -69,6 +67,7 @@ def oldregion_func(data, region_list):
 
 def newregiongrid(chunk, grid):
 
+    # I thought this might be a more efficient method of doing what the above function does
     lats = grid[0]
     lons = grid[1]
     cdata = chunk.groupby([pd.cut(chunk['Latitude'], lats),pd.cut(chunk['Longitude'],lons)])
@@ -77,6 +76,7 @@ def newregiongrid(chunk, grid):
 
 def new_func(region_grid_list, month_names):
 
+    #this function iterates through the dictionary containing the lightning file chunks and counts lightning 
     data_dict = get_data(work_dir)
     region_month_hourly_freqs = {f'{grid}': {month_abbr[i]: np.zeros(24,dtype=int) for i in range(1, 13)} for grid in region_grid_list}
     index_names = ['Month', 'Hour']
